@@ -8,7 +8,8 @@ import {
   Title,
   Stack,
 } from "@mantine/core";
-import CandidateForm from "@/components/CandidateForm";
+import CandidateForm from "../../components/CandidateForm";
+
 
 // ✅ Define the Candidate type
 interface Candidate {
