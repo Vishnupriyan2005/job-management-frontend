@@ -1,33 +1,37 @@
-'use client';
-import { useEffect, useState } from 'react';
-import { Container, Title, Card, TextInput, Button, Textarea } from '@mantine/core';
-import axios from 'axios';
+"use client";
+
+import { useEffect, useState } from "react";
+import {
+  Button,
+  Card,
+  Container,
+  Title,
+  Stack,
+} from "@mantine/core";
+import CandidateForm from "@/components/CandidateForm";
+
+// ✅ Define the Candidate type
+interface Candidate {
+  id: string;
+  name: string;
+  skills: string;
+}
 
 export default function CandidatesPage() {
-  const [candidates, setCandidates] = useState([]);
-  const [name, setName] = useState('');
-  const [skills, setSkills] = useState('');
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
 
+  // ✅ Fetch candidates from your API
   const fetchCandidates = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/candidates');
-      setCandidates(response.data);
+      const res = await fetch("/api/candidates");
+      const data: Candidate[] = await res.json();
+      setCandidates(data);
     } catch (error) {
-      console.error('Error fetching candidates:', error);
-    }
-  };
-
-  const addCandidate = async () => {
-    try {
-      await axios.post('http://localhost:3000/candidates', {
-        name,
-        skills,
-      });
-      setName('');
-      setSkills('');
-      fetchCandidates(); // reload candidates list
-    } catch (error) {
-      console.error('Error adding candidate:', error);
+      console.error("Error fetching candidates:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -35,37 +39,32 @@ export default function CandidatesPage() {
     fetchCandidates();
   }, []);
 
+  const handleCandidateCreated = (newCandidate: Candidate) => {
+    setCandidates((prev) => [newCandidate, ...prev]);
+    setShowForm(false);
+  };
+
   return (
     <Container>
-      <Title order={1} mb="lg">Candidates</Title>
+      <Title order={2} mb="md">Candidates</Title>
 
-      <TextInput
-        label="Candidate Name"
-        placeholder="Enter name"
-        value={name}
-        onChange={(event) => setName(event.currentTarget.value)}
-        mb="sm"
-      />
+      <Button onClick={() => setShowForm((prev) => !prev)} mb="md">
+        {showForm ? "Close Form" : "Add Candidate"}
+      </Button>
 
-      <Textarea
-        label="Skills"
-        placeholder="Enter skills"
-        value={skills}
-        onChange={(event) => setSkills(event.currentTarget.value)}
-        mb="sm"
-      />
+      {showForm && <CandidateForm onCandidateCreated={handleCandidateCreated} />}
 
-      <Button onClick={addCandidate} mb="lg">Add Candidate</Button>
-
-      {candidates.length === 0 ? (
-        <p>No candidates found.</p>
+      {loading ? (
+        <p>Loading candidates...</p>
       ) : (
-        candidates.map((candidate) => (
-          <Card key={candidate.id} shadow="sm" padding="lg" mb="sm" radius="md">
-            <Title order={4}>{candidate.name}</Title>
-            <p>{candidate.skills}</p>
-          </Card>
-        ))
+        <Stack>
+          {candidates.map((candidate) => (
+            <Card key={candidate.id} shadow="sm" padding="lg" radius="md" withBorder>
+              <Title order={4}>{candidate.name}</Title>
+              <p>{candidate.skills}</p>
+            </Card>
+          ))}
+        </Stack>
       )}
     </Container>
   );

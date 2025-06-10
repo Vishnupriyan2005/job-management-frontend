@@ -1,135 +1,68 @@
 'use client';
 
-import React from 'react';
 import { useForm } from 'react-hook-form';
+import { useRouter } from 'next/navigation';
 import {
+  Button,
+  Container,
+  Stack,
   TextInput,
   Textarea,
-  Select,
-  Button,
-  Group,
-  Stack,
-  Container,
   Title,
 } from '@mantine/core';
-import { DatePickerInput } from '@mantine/dates';
 
-interface JobFormData {
+type JobFormValues = {
   title: string;
-  company: string;
+  description: string;
   location: string;
-  type: string;
-  salary?: string;
-  description?: string;
-  requirements?: string;
-  responsibilities?: string;
-  deadline?: Date | null;
-}
+};
 
 export default function CreateJobPage() {
-  const { register, handleSubmit, reset } = useForm<JobFormData>();
+  const { register, handleSubmit, reset } = useForm<JobFormValues>();
+  const router = useRouter();
 
-  const onSubmit = (data: JobFormData) => {
-    // Clean salary to numeric string (remove all non-digit chars)
-    const salaryNumeric = data.salary ? data.salary.replace(/[^\d]/g, '') : undefined;
-
-    // Prepare payload
-    const payload = {
-      ...data,
-      salary: salaryNumeric,
-      deadline: data.deadline ? data.deadline.toISOString() : null,
-    };
-
-    // Replace with your actual backend API URL
-    fetch('http://localhost:5000/api/jobs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-      .then((res) => res.json())
-      .then((res) => {
-        if (res.error) {
-          alert('Error: ' + res.message);
-        } else {
-          alert('✅ Job Created Successfully!');
-          reset();
-        }
-      })
-      .catch((err) => {
-        alert('Failed to submit: ' + err.message);
+  const onSubmit = async (data: JobFormValues) => {
+    try {
+      const response = await fetch('http://localhost:3001/jobs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
       });
+
+      if (response.ok) {
+        reset();
+        router.push('/jobs');
+      }
+    } catch (error) {
+      console.error('Failed to create job', error);
+    }
   };
 
   return (
-    <Container size="md" py="lg">
-      <Title order={2} mb="md">
+    <Container>
+      <Title order={2} mb="lg">
         Create New Job
       </Title>
-
       <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack spacing="md">
+        <Stack gap="md">
           <TextInput
             label="Job Title"
             placeholder="e.g. Full Stack Developer"
-            {...register('title', { required: 'Job Title is required' })}
+            {...register('title', { required: true })}
           />
-
-          <TextInput
-            label="Company Name"
-            placeholder="e.g. Cybermind Works"
-            {...register('company', { required: 'Company Name is required' })}
-          />
-
-          <TextInput
-            label="Location"
-            placeholder="e.g. Chennai"
-            {...register('location', { required: 'Location is required' })}
-          />
-
-          <Select
-            label="Job Type"
-            placeholder="Select job type"
-            data={['Full-time', 'Part-time', 'Contract', 'Internship']}
-            {...register('type', { required: 'Job Type is required' })}
-          />
-
-          <TextInput
-            label="Salary Range"
-            placeholder="e.g. ₹50k - ₹80k"
-            {...register('salary')}
-          />
-
           <Textarea
             label="Job Description"
-            placeholder="Brief description of the job"
-            minRows={3}
-            {...register('description')}
+            placeholder="Enter job responsibilities..."
+            {...register('description', { required: true })}
           />
-
-          <Textarea
-            label="Requirements"
-            placeholder="List required skills/experience"
-            minRows={2}
-            {...register('requirements')}
+          <TextInput
+            label="Location"
+            placeholder="e.g. Remote, Chennai"
+            {...register('location', { required: true })}
           />
-
-          <Textarea
-            label="Responsibilities"
-            placeholder="What will the candidate do?"
-            minRows={2}
-            {...register('responsibilities')}
-          />
-
-          <DatePickerInput
-            label="Application Deadline"
-            placeholder="Pick a deadline"
-            {...register('deadline')}
-            clearable
-          />
-
-          <Group position="right">
-            <Button type="submit">Post Job</Button>
-          </Group>
+          <Button type="submit">Create Job</Button>
         </Stack>
       </form>
     </Container>
