@@ -119,7 +119,7 @@ export default function JobListPage() {
       <Stack>
         {filteredJobs.map((job) => (
           <Card key={job.id} shadow="sm" padding="lg" withBorder>
-            <Group position="apart" mb="xs">
+           <Group justify="space-between" mb="xs">
               <Text fw={500}>{job.title}</Text>
               <Text size="sm" c="dimmed">
                 {job.jobType}
