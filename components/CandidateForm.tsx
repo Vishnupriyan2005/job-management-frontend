@@ -1,54 +1,94 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { TextInput, Textarea, Button, Stack } from "@mantine/core";
+import { useForm } from 'react-hook-form'
+import { TextInput, Button, Select } from '@mantine/core'
+import { useEffect, useState } from 'react'
+import axios from 'axios'
+import { notifications } from '@mantine/notifications'
 
-interface Candidate {
-  id: string;
-  name: string;
-  skills: string;
-}
+type Job = { id: number; title: string }
+type Company = { id: number; name: string }
 
-interface CandidateFormProps {
-  onCandidateCreated: (candidate: Candidate) => void;
-}
+export default function CandidateForm() {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm()
 
-export default function CandidateForm({ onCandidateCreated }: CandidateFormProps) {
-  const [name, setName] = useState("");
-  const [skills, setSkills] = useState("");
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [companies, setCompanies] = useState<Company[]>([])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    axios.get('/api/jobs').then((res) => setJobs(res.data))
+    axios.get('/api/companies').then((res) => setCompanies(res.data))
+  }, [])
 
-    const res = await fetch("/api/candidates", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, skills }),
-    });
-
-    const newCandidate: Candidate = await res.json();
-    onCandidateCreated(newCandidate);
-    setName("");
-    setSkills("");
-  };
+  const onSubmit = async (data: any) => {
+    try {
+      await axios.post('/api/candidates', {
+        name: data.name,
+        email: data.email,
+        jobId: Number(data.jobId),
+        companyId: Number(data.companyId),
+      })
+      notifications.show({
+        title: 'Success',
+        message: 'Candidate created successfully!',
+        color: 'green',
+      })
+      reset()
+    } catch (error) {
+      notifications.show({
+        title: 'Error',
+        message: 'Something went wrong!',
+        color: 'red',
+      })
+    }
+  }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Stack>
-        <TextInput
-          label="Candidate Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-        <Textarea
-          label="Skills"
-          value={skills}
-          onChange={(e) => setSkills(e.target.value)}
-          required
-        />
-        <Button type="submit">Add Candidate</Button>
-      </Stack>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-md">
+      <TextInput
+        label="Name"
+        placeholder="Enter name"
+        {...register('name', { required: 'Name is required' })}
+        error={errors.name?.message}
+      />
+      <TextInput
+        label="Email"
+        placeholder="Enter email"
+        {...register('email', {
+          required: 'Email is required',
+          pattern: {
+            value: /^\S+@\S+$/i,
+            message: 'Invalid email format',
+          },
+        })}
+        error={errors.email?.message}
+      />
+      <Select
+        label="Select Job"
+        placeholder="Choose a job"
+        data={jobs.map((job) => ({ value: String(job.id), label: job.title }))}
+        {...register('jobId', { required: 'Job is required' })}
+        onChange={(value) => setValue('jobId', value)}
+        error={errors.jobId?.message}
+      />
+      <Select
+        label="Select Company"
+        placeholder="Choose a company"
+        data={companies.map((c) => ({ value: String(c.id), label: c.name }))}
+        {...register('companyId', { required: 'Company is required' })}
+        onChange={(value) => setValue('companyId', value)}
+        error={errors.companyId?.message}
+      />
+
+      <Button type="submit" loading={isSubmitting}>
+        Add Candidate
+      </Button>
     </form>
-  );
+  )
 }

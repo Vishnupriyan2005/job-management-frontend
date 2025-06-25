@@ -1,38 +1,52 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Button,
-  Card,
-  Container,
-  Title,
-  Stack,
-} from "@mantine/core";
-import CandidateForm from "../../components/CandidateForm";
+import axios from "axios";
+import { Table, Button, TextInput, Box } from "@mantine/core";
+import { showNotification } from "@mantine/notifications";
 
-
-// ✅ Define the Candidate type
 interface Candidate {
-  id: string;
+  id: number;
   name: string;
-  skills: string;
+  email: string;
+  phone: string;
+  job: {
+    title: string;
+  };
 }
 
-export default function CandidatesPage() {
+export default function CandidateListPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
-  // ✅ Fetch candidates from your API
   const fetchCandidates = async () => {
     try {
-      const res = await fetch("/api/candidates");
-      const data: Candidate[] = await res.json();
-      setCandidates(data);
-    } catch (error) {
-      console.error("Error fetching candidates:", error);
-    } finally {
-      setLoading(false);
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/candidates`);
+      setCandidates(res.data);
+    } catch (err) {
+      showNotification({
+        title: "Error",
+        message: "Failed to load candidates",
+        color: "red",
+      });
+    }
+  };
+
+  const deleteCandidate = async (id: number) => {
+    try {
+      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/candidates/${id}`);
+      showNotification({
+        title: "Deleted",
+        message: "Candidate deleted",
+        color: "red",
+      });
+      fetchCandidates();
+    } catch (err) {
+      showNotification({
+        title: "Error",
+        message: "Failed to delete",
+        color: "red",
+      });
     }
   };
 
@@ -40,33 +54,61 @@ export default function CandidatesPage() {
     fetchCandidates();
   }, []);
 
-  const handleCandidateCreated = (newCandidate: Candidate) => {
-    setCandidates((prev) => [newCandidate, ...prev]);
-    setShowForm(false);
-  };
+  const filteredCandidates = candidates.filter((candidate) =>
+    candidate.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <Container>
-      <Title order={2} mb="md">Candidates</Title>
+    <Box p="md">
+      <TextInput
+        placeholder="Search candidates..."
+        value={search}
+        onChange={(e) => setSearch(e.currentTarget.value)}
+        mb="md"
+      />
 
-      <Button onClick={() => setShowForm((prev) => !prev)} mb="md">
-        {showForm ? "Close Form" : "Add Candidate"}
-      </Button>
-
-      {showForm && <CandidateForm onCandidateCreated={handleCandidateCreated} />}
-
-      {loading ? (
-        <p>Loading candidates...</p>
-      ) : (
-        <Stack>
-          {candidates.map((candidate) => (
-            <Card key={candidate.id} shadow="sm" padding="lg" radius="md" withBorder>
-              <Title order={4}>{candidate.name}</Title>
-              <p>{candidate.skills}</p>
-            </Card>
+      <Table
+        sx={{
+          borderCollapse: 'collapse',
+          border: '1px solid #dee2e6',
+          'th, td': {
+            border: '1px solid #dee2e6',
+            padding: '8px',
+          },
+        }}
+      >
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Job</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filteredCandidates.map((candidate) => (
+            <tr key={candidate.id}>
+              <td>{candidate.name}</td>
+              <td>{candidate.email}</td>
+              <td>{candidate.phone}</td>
+              <td>{candidate.job?.title || "N/A"}</td>
+              <td>
+                <Button color="red" onClick={() => deleteCandidate(candidate.id)}>
+                  Delete
+                </Button>
+              </td>
+            </tr>
           ))}
-        </Stack>
-      )}
-    </Container>
+          {filteredCandidates.length === 0 && (
+            <tr>
+              <td colSpan={5} style={{ textAlign: "center" }}>
+                No candidates found.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </Table>
+    </Box>
   );
 }

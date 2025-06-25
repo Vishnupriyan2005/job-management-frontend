@@ -1,87 +1,138 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
 import {
-  Table,
-  Title,
-  Container,
-  Loader,
+  Box,
+  TextInput,
+  Select,
+  Slider,
+  Card,
   Text,
-  Paper,
-} from '@mantine/core';
+  Group,
+  Stack,
+} from "@mantine/core";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 interface Job {
-  id: number;
+  id: string;
   title: string;
-  description: string;
-  company: string;
+  companyName: string;
   location: string;
+  jobType: string;
+  salary: number;
 }
 
-const fetchJobs = async (): Promise<Job[]> => {
-  try {
-    const response = await fetch('http://localhost:3000/jobs'); // Use backend API
-    if (!response.ok) {
-      throw new Error('Failed to fetch jobs');
-    }
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching jobs:', error);
-    return [];
-  }
-};
-
-export default function JobsPage() {
+export default function JobListPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
+
+  const [titleFilter, setTitleFilter] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [jobTypeFilter, setJobTypeFilter] = useState("");
+  const [salaryRange, setSalaryRange] = useState<[number, number]>([0, 100000]);
 
   useEffect(() => {
-    const loadJobs = async () => {
-      const data = await fetchJobs();
-      setJobs(data);
-      setLoading(false);
-    };
-
-    loadJobs();
+    fetchJobs();
   }, []);
 
-  return (
-    <Container size="lg" py="md">
-      <Title order={2} mb="md">
-        Job Listings
-      </Title>
+  useEffect(() => {
+    applyFilters();
+  }, [titleFilter, locationFilter, jobTypeFilter, salaryRange, jobs]);
 
-      {loading ? (
-        <Loader />
-      ) : jobs.length === 0 ? (
-        <Text>No jobs found.</Text>
-      ) : (
-        <Paper shadow="xs" p="md" radius="md" withBorder>
-          <Table highlightOnHover>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Title</th>
-                <th>Company</th>
-                <th>Location</th>
-                <th>Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              {jobs.map((job) => (
-                <tr key={job.id}>
-                  <td>{job.id}</td>
-                  <td>{job.title}</td>
-                  <td>{job.company}</td>
-                  <td>{job.location}</td>
-                  <td>{job.description}</td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </Paper>
-      )}
-    </Container>
+  const fetchJobs = async () => {
+    try {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/jobs`);
+      console.log("Jobs from backend:", res.data);
+      setJobs(res.data || []);
+      setFilteredJobs(res.data || []);
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+    }
+  };
+
+  const applyFilters = () => {
+    const filtered = jobs.filter((job) => {
+      const matchesTitle = job?.title?.toLowerCase().includes(titleFilter.toLowerCase());
+      const matchesLocation = job?.location?.toLowerCase().includes(locationFilter.toLowerCase());
+      const matchesType = jobTypeFilter ? job?.jobType === jobTypeFilter : true;
+      const matchesSalary = job?.salary >= salaryRange[0] && job?.salary <= salaryRange[1];
+      return matchesTitle && matchesLocation && matchesType && matchesSalary;
+    });
+
+    setFilteredJobs(filtered);
+  };
+
+  return (
+    <Box p="md">
+      <Text size="xl" mb="sm" fw={600}>
+        Filter Jobs
+      </Text>
+
+      <Group grow mb="lg">
+        <TextInput
+          label="Job Title"
+          placeholder="Search by title"
+          value={titleFilter}
+          onChange={(e) => setTitleFilter(e.currentTarget.value)}
+        />
+        <TextInput
+          label="Location"
+          placeholder="Search by location"
+          value={locationFilter}
+          onChange={(e) => setLocationFilter(e.currentTarget.value)}
+        />
+        <Select
+          label="Job Type"
+          placeholder="Select type"
+          data={[
+            { label: "Full-time", value: "Full-time" },
+            { label: "Part-time", value: "Part-time" },
+            { label: "Contract", value: "Contract" },
+            { label: "Internship", value: "Internship" },
+          ]}
+          value={jobTypeFilter}
+          onChange={setJobTypeFilter}
+          clearable
+          searchable
+        />
+      </Group>
+
+      <Box mb="lg">
+        <Text>
+          Salary Range: ₹{salaryRange[0]} - ₹{salaryRange[1]}
+        </Text>
+        <Slider
+          min={0}
+          max={200000}
+          step={5000}
+          value={salaryRange}
+          onChange={setSalaryRange}
+          marks={[
+            { value: 0, label: "0" },
+            { value: 100000, label: "1L" },
+            { value: 200000, label: "2L" },
+          ]}
+          mt="xs"
+        />
+      </Box>
+
+      <Stack>
+        {filteredJobs.map((job) => (
+          <Card key={job.id} shadow="sm" padding="lg" withBorder>
+            <Group position="apart" mb="xs">
+              <Text fw={500}>{job.title}</Text>
+              <Text size="sm" c="dimmed">
+                {job.jobType}
+              </Text>
+            </Group>
+            <Text size="sm">
+              {job.companyName} • {job.location}
+            </Text>
+            <Text size="sm">₹{job.salary}</Text>
+          </Card>
+        ))}
+        {filteredJobs.length === 0 && <Text>No jobs found.</Text>}
+      </Stack>
+    </Box>
   );
 }

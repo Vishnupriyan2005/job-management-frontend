@@ -1,22 +1,20 @@
-'use client';
+import "./globals.css";
+import { ColorSchemeScript } from "@mantine/core";
+import { Providers } from "./providers";
 
-import '@mantine/core/styles.css';
-import { MantineProvider } from '@mantine/core';
-import { Notifications } from '@mantine/notifications';
-import Sidebar from '../components/sidebar';
-
+export const metadata = {
+  title: "Job Management Admin Panel",
+  description: "Cybermind Works HR Assignment",
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" data-mantine-color-scheme="light">
+      <head>
+        <ColorSchemeScript />
+      </head>
       <body>
-        <MantineProvider defaultColorScheme="light">
-          <Notifications />
-          <div style={{ display: 'flex' }}>
-            <Sidebar />
-            <main style={{ flex: 1, padding: 20 }}>{children}</main>
-          </div>
-        </MantineProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

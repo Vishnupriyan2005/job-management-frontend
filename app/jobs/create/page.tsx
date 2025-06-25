@@ -1,70 +1,173 @@
-'use client';
+"use client";
 
-import { useForm } from 'react-hook-form';
-import { useRouter } from 'next/navigation';
 import {
+  Box,
   Button,
-  Container,
-  Stack,
   TextInput,
   Textarea,
-  Title,
-} from '@mantine/core';
-
-type JobFormValues = {
-  title: string;
-  description: string;
-  location: string;
-};
+  Select,
+  NumberInput,
+  Group,
+} from "@mantine/core";
+import { DateInput } from "@mantine/dates";
+import { useForm, Controller } from "react-hook-form";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import { showNotification } from "@mantine/notifications";
+import dayjs from "dayjs";
 
 export default function CreateJobPage() {
-  const { register, handleSubmit, reset } = useForm<JobFormValues>();
   const router = useRouter();
 
-  const onSubmit = async (data: JobFormValues) => {
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      title: "",
+      companyName: "",
+      location: "",
+      jobType: "",
+      salary: 0,
+      description: "",
+      requirements: "",
+      responsibilities: "",
+      applicationDeadline: null,
+    },
+  });
+
+  const onSubmit = async (data: any) => {
     try {
-      const response = await fetch('http://localhost:3001/jobs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/jobs`, {
+        ...data,
+        applicationDeadline: dayjs(data.applicationDeadline).toISOString(),
       });
 
-      if (response.ok) {
-        reset();
-        router.push('/jobs');
-      }
-    } catch (error) {
-      console.error('Failed to create job', error);
+      showNotification({
+        title: "Success",
+        message: "Job created successfully",
+        color: "green",
+      });
+
+      router.push("/jobs");
+    } catch (err) {
+      showNotification({
+        title: "Error",
+        message: "Failed to create job",
+        color: "red",
+      });
     }
   };
 
   return (
-    <Container>
-      <Title order={2} mb="lg">
-        Create New Job
-      </Title>
+    <Box p="md" maw={600} mx="auto">
       <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack gap="md">
-          <TextInput
-            label="Job Title"
-            placeholder="e.g. Full Stack Developer"
-            {...register('title', { required: true })}
-          />
-          <Textarea
-            label="Job Description"
-            placeholder="Enter job responsibilities..."
-            {...register('description', { required: true })}
-          />
-          <TextInput
-            label="Location"
-            placeholder="e.g. Remote, Chennai"
-            {...register('location', { required: true })}
-          />
+        <Controller
+          name="title"
+          control={control}
+          rules={{ required: true }}
+          render={({ field }) => (
+            <TextInput label="Job Title" {...field} error={!!errors.title} mb="sm" />
+          )}
+        />
+        <Controller
+          name="companyName"
+          control={control}
+          rules={{ required: true }}
+          render={({ field }) => (
+            <TextInput label="Company Name" {...field} error={!!errors.companyName} mb="sm" />
+          )}
+        />
+        <Controller
+          name="location"
+          control={control}
+          rules={{ required: true }}
+          render={({ field }) => (
+            <TextInput label="Location" {...field} error={!!errors.location} mb="sm" />
+          )}
+        />
+        <Controller
+          name="jobType"
+          control={control}
+          rules={{ required: true }}
+          render={({ field }) => (
+            <Select
+              label="Job Type"
+              placeholder="Select job type"
+              data={[
+                { label: "Full-time", value: "Full-time" },
+                { label: "Part-time", value: "Part-time" },
+                { label: "Contract", value: "Contract" },
+                { label: "Internship", value: "Internship" },
+              ]}
+              value={field.value}
+              onChange={field.onChange}
+              error={!!errors.jobType}
+              mb="sm"
+              searchable
+              clearable
+              withCheckIcon={false}
+              nothingFoundMessage="No options"
+            />
+          )}
+        />
+        <Controller
+          name="salary"
+          control={control}
+          rules={{ required: true }}
+          render={({ field }) => (
+            <NumberInput
+              label="Salary Range"
+              {...field}
+              error={!!errors.salary}
+              mb="sm"
+            />
+          )}
+        />
+        <Controller
+          name="description"
+          control={control}
+          rules={{ required: true }}
+          render={({ field }) => (
+            <Textarea label="Job Description" {...field} error={!!errors.description} mb="sm" />
+          )}
+        />
+        <Controller
+          name="requirements"
+          control={control}
+          rules={{ required: true }}
+          render={({ field }) => (
+            <Textarea label="Requirements" {...field} error={!!errors.requirements} mb="sm" />
+          )}
+        />
+        <Controller
+          name="responsibilities"
+          control={control}
+          rules={{ required: true }}
+          render={({ field }) => (
+            <Textarea label="Responsibilities" {...field} error={!!errors.responsibilities} mb="sm" />
+          )}
+        />
+        <Controller
+          name="applicationDeadline"
+          control={control}
+          rules={{ required: true }}
+          render={({ field }) => (
+            <DateInput
+              label="Application Deadline"
+              {...field}
+              value={field.value}
+              onChange={field.onChange}
+              error={!!errors.applicationDeadline}
+              mb="sm"
+            />
+          )}
+        />
+        <Group position="right" mt="md">
           <Button type="submit">Create Job</Button>
-        </Stack>
+        </Group>
       </form>
-    </Container>
+    </Box>
   );
 }
