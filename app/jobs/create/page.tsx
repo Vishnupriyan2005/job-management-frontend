@@ -164,7 +164,8 @@ export default function CreateJobPage() {
             />
           )}
         />
-        <Group position="right" mt="md">
+
+        <Group mt="md" style={{ justifyContent: "flex-end" }}>
           <Button type="submit">Create Job</Button>
         </Group>
       </form>
