@@ -4,7 +4,7 @@ import {
   Box,
   TextInput,
   Select,
-  Slider,
+  RangeSlider,
   Card,
   Text,
   Group,
@@ -91,7 +91,7 @@ export default function JobListPage() {
             { label: "Internship", value: "Internship" },
           ]}
           value={jobTypeFilter}
-          onChange={setJobTypeFilter}
+          onChange={(value) => setJobTypeFilter(value || "")}
           clearable
           searchable
         />
@@ -101,12 +101,12 @@ export default function JobListPage() {
         <Text>
           Salary Range: ₹{salaryRange[0]} - ₹{salaryRange[1]}
         </Text>
-        <Slider
+        <RangeSlider
           min={0}
           max={200000}
           step={5000}
           value={salaryRange}
-          onChange={setSalaryRange}
+          onChange={(value) => setSalaryRange(value || [0, 100000])}
           marks={[
             { value: 0, label: "0" },
             { value: 100000, label: "1L" },
