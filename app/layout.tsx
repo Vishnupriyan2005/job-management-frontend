@@ -15,7 +15,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <ColorSchemeScript />
       </head>
       <body>
-        <MantineProvider defaultColorScheme="light">
+        <MantineProvider>
           {children}
         </MantineProvider>
       </body>
