@@ -55,7 +55,11 @@ export default function CandidateForm() {
         label="Name"
         placeholder="Enter name"
         {...register('name', { required: 'Name is required' })}
-        error={errors.name?.message}
+        error={
+          typeof errors.name?.message === 'string'
+            ? errors.name.message
+            : undefined
+        }
       />
       <TextInput
         label="Email"
@@ -67,23 +71,33 @@ export default function CandidateForm() {
             message: 'Invalid email format',
           },
         })}
-        error={errors.email?.message}
+        error={
+          typeof errors.email?.message === 'string'
+            ? errors.email.message
+            : undefined
+        }
       />
       <Select
         label="Select Job"
         placeholder="Choose a job"
         data={jobs.map((job) => ({ value: String(job.id), label: job.title }))}
-        {...register('jobId', { required: 'Job is required' })}
-        onChange={(value) => setValue('jobId', value)}
-        error={errors.jobId?.message}
+        onChange={(value) => setValue('jobId', value || '')}
+        error={
+          typeof errors.jobId?.message === 'string'
+            ? errors.jobId.message
+            : undefined
+        }
       />
       <Select
         label="Select Company"
         placeholder="Choose a company"
         data={companies.map((c) => ({ value: String(c.id), label: c.name }))}
-        {...register('companyId', { required: 'Company is required' })}
-        onChange={(value) => setValue('companyId', value)}
-        error={errors.companyId?.message}
+        onChange={(value) => setValue('companyId', value || '')}
+        error={
+          typeof errors.companyId?.message === 'string'
+            ? errors.companyId.message
+            : undefined
+        }
       />
 
       <Button type="submit" loading={isSubmitting}>
