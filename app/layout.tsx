@@ -1,20 +1,15 @@
-import "./globals.css";
-import { ColorSchemeScript } from "@mantine/core";
-import { Providers } from "./providers";
+// app/layout.tsx
+import { ReactNode } from "react";
+import { MantineProvider } from "@mantine/core";
 
-export const metadata = {
-  title: "Job Management Admin Panel",
-  description: "Cybermind Works HR Assignment",
-};
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" data-mantine-color-scheme="light">
-      <head>
-        <ColorSchemeScript />
-      </head>
+    <html lang="en">
+      <head />
       <body>
-        <Providers>{children}</Providers>
+        <MantineProvider withGlobalStyles withNormalizeCSS>
+          {children}
+        </MantineProvider>
       </body>
     </html>
   );

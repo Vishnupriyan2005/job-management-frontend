@@ -1,125 +1,66 @@
+// app/candidates/create/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { Select, TextInput, Button, Box } from "@mantine/core";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { notifications, showNotification } from "@mantine/notifications"; // ✅ FIX: Added showNotification
-import * as z from "zod";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 
-const schema = z.object({
-  name: z.string().min(1),
-  email: z.string().email(),
-  phone: z.string().min(10),
-  jobId: z.string().min(1),
-});
+export default function CreateCandidatePage() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
 
-export default function CreateCandidate() {
-  const router = useRouter();
-  const [jobOptions, setJobOptions] = useState<{ value: string; label: string }[]>([]);
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm({
-    resolver: zodResolver(schema),
-  });
+    // Replace with your backend API URL
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/candidates`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name, email }),
+    });
 
-  useEffect(() => {
-    async function fetchJobs() {
-      try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/jobs`);
-        console.log("Loaded Jobs:", res.data);
-        const options = res.data.map((job: any) => ({
-          value: job.id.toString(),
-          label: job.title,
-        }));
-        setJobOptions(options); // ✅ dynamically loaded from backend
-      } catch (err) {
-        console.error("Job fetch failed", err);
-        notifications.show({
-          title: "Error",
-          message: "Failed to load jobs",
-          color: "red",
-        });
-      }
+    if (res.ok) {
+      setMessage("Candidate created successfully!");
+      setName("");
+      setEmail("");
+    } else {
+      setMessage("Failed to create candidate.");
     }
-
-    fetchJobs();
-  }, []);
-
-  const onSubmit = async (data: any) => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/candidates`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...data,
-          jobId: Number(data.jobId),
-          companyId: 1, // ✅ hardcoded for now
-        }),
-      });
-
-      if (!response.ok) throw new Error("Failed to create candidate");
-
-      showNotification({
-        title: "Success",
-        message: "Candidate created successfully",
-        color: "green",
-      });
-
-      router.push("/candidates"); // ✅ Optional: redirect after creation
-    } catch (error) {
-      showNotification({
-        title: "Error",
-        message: "Failed to create candidate",
-        color: "red",
-      });
-    }
-  };
+  }
 
   return (
-    <Box maw={450} mx="auto" p="lg" bg="white" shadow="md" radius="md">
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <TextInput
-          label="Name"
-          {...register("name")}
-          error={errors.name?.message}
-          required
-        />
-        <TextInput
-          label="Email"
-          {...register("email")}
-          error={errors.email?.message}
-          required
-        />
-        <TextInput
-          label="Phone"
-          {...register("phone")}
-          error={errors.phone?.message}
-          required
-        />
-        <Select
-          label="Job Role"
-          placeholder="Select a job"
-          data={jobOptions} // ✅ used dynamic jobs from backend
-          value={watch("jobId") || ""}
-          onChange={(value) => setValue("jobId", value ?? "")}
-          error={errors.jobId?.message}
-          required
-          searchable
-        />
-        <Button type="submit" mt="md" color="blue" fullWidth>
-          Create
-        </Button>
+    <main style={{ padding: "2rem" }}>
+      <h1>Create Candidate</h1>
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: "1rem" }}>
+          <label>
+            Name: <br />
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </label>
+        </div>
+
+        <div style={{ marginBottom: "1rem" }}>
+          <label>
+            Email: <br />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </label>
+        </div>
+
+        <button type="submit">Create</button>
       </form>
-    </Box>
+
+      {message && <p style={{ marginTop: "1rem" }}>{message}</p>}
+    </main>
   );
 }
