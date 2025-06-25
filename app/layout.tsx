@@ -1,6 +1,6 @@
 // app/layout.tsx
 import '@mantine/core/styles.css';
-import { MantineProvider, ColorSchemeScript } from '@mantine/core';
+import { ColorSchemeScript, MantineProvider } from '@mantine/core';
 import type { ReactNode } from 'react';
 
 export const metadata = {
@@ -15,6 +15,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <ColorSchemeScript />
       </head>
       <body>
+        {/* ✅ No withGlobalStyles / withNormalizeCSS */}
         <MantineProvider>
           {children}
         </MantineProvider>
