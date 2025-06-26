@@ -1,63 +1,62 @@
 'use client';
 
-import React, { useState } from 'react';
+import { TextInput, Select, Button, Group, Textarea } from '@mantine/core';
+import { useForm } from 'react-hook-form';
 import axios from 'axios';
-import { TextInput, Textarea, Button, Box } from '@mantine/core';
 
-interface JobFormProps {
-  onSuccess: () => void;
+interface Company {
+  id: number;
+  name: string;
 }
 
-const JobForm: React.FC<JobFormProps> = ({ onSuccess }) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [company, setCompany] = useState('');
+export default function JobForm({ companies }: { companies: Company[] }) {
+  const { register, handleSubmit, setValue } = useForm();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const jobTypes = ['Full-time', 'Part-time', 'Internship', 'Contract'];
 
+  const onSubmit = async (data: any) => {
     try {
-      await axios.post('http://localhost:3002/jobs', {
-        title,
-        description,
-        company,
-      });
-
-      setTitle('');
-      setDescription('');
-      setCompany('');
-      onSuccess(); // refresh the job list after success
-    } catch (error) {
-      console.error('Error adding job:', error);
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/jobs`, data);
+      alert('Job created successfully!');
+    } catch (err) {
+      console.error('Job create error:', err);
+      alert('Something went wrong!');
     }
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} mb="md">
-      <TextInput
-        label="Job Title"
-        value={title}
-        onChange={(e) => setTitle(e.currentTarget.value)}
-        required
-        mb="sm"
-      />
-      <TextInput
-        label="Company"
-        value={company}
-        onChange={(e) => setCompany(e.currentTarget.value)}
-        required
-        mb="sm"
-      />
-      <Textarea
-        label="Job Description"
-        value={description}
-        onChange={(e) => setDescription(e.currentTarget.value)}
-        required
-        mb="sm"
-      />
-      <Button type="submit">Add Job</Button>
-    </Box>
-  );
-};
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <TextInput label="Job Title" {...register('title')} required />
+      <TextInput label="Location" {...register('location')} required />
+      <TextInput label="Salary" type="number" {...register('salary')} required />
 
-export default JobForm;
+      <Select
+        label="Job Type"
+        placeholder="Select job type"
+        data={jobTypes}
+        onChange={(val) => setValue('type', val!)}
+        required
+      />
+
+      <Select
+        label="Company"
+        placeholder="Select a company"
+        data={companies.map((c) => ({
+          value: c.id.toString(),
+          label: c.name,
+        }))}
+        onChange={(val) => setValue('companyId', parseInt(val!))}
+        required
+      />
+
+      <Textarea label="Job Description" {...register('description')} required />
+      <Textarea label="Requirements" {...register('requirements')} required />
+      <Textarea label="Responsibilities" {...register('responsibilities')} required />
+      <TextInput label="Application Deadline" type="date" {...register('deadline')} required />
+
+      <Group position="right" mt="md">
+        <Button type="submit">Submit</Button>
+      </Group>
+    </form>
+  );
+}

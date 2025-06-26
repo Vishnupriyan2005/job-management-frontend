@@ -1,24 +1,21 @@
-// app/layout.tsx
-import '@mantine/core/styles.css';
-import { ColorSchemeScript, MantineProvider } from '@mantine/core';
-import type { ReactNode } from 'react';
+import './globals.css';
+import { ColorSchemeScript } from '@mantine/core';
+import { Providers } from './providers';
 
 export const metadata = {
   title: 'Job Management App',
-  description: 'Manage job postings',
+  description: 'Admin Interface',
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" data-mantine-color-scheme="light">
       <head>
-        <ColorSchemeScript />
+        {/* This ensures SSR + hydration match */}
+        <ColorSchemeScript defaultColorScheme="light" />
       </head>
       <body>
-        {/* ✅ No withGlobalStyles / withNormalizeCSS */}
-        <MantineProvider>
-          {children}
-        </MantineProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
