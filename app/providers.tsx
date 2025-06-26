@@ -4,7 +4,7 @@ import { MantineProvider } from '@mantine/core';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <MantineProvider withGlobalStyles withNormalizeCSS theme={{ colorScheme: 'light' }}>
+    <MantineProvider defaultColorScheme="light" withGlobalStyles withNormalizeCSS>
       {children}
     </MantineProvider>
   );
