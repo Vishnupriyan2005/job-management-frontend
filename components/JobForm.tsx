@@ -54,7 +54,7 @@ export default function JobForm({ companies }: { companies: Company[] }) {
       <Textarea label="Responsibilities" {...register('responsibilities')} required />
       <TextInput label="Application Deadline" type="date" {...register('deadline')} required />
 
-      <Group position="right" mt="md">
+      <Group justify="flex-end" mt="md">
         <Button type="submit">Submit</Button>
       </Group>
     </form>
